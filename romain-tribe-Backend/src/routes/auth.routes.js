@@ -1,20 +1,32 @@
 import express from "express";
-import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
-import connectDB from "./src/config/db.js";
+import {
+  loginAdmin,
+  logoutAdmin,
+  createSubAdmin,
+  getMe,
+  createAdmin,
+} from "../controllers/auth.controller.js";
 
-import authRoutes from "./src/routes/auth.routes.js";
+import { protect } from "../middlewares/auth.middleware.js";
+import { checkPermission } from "../middlewares/permission.middleware.js";
 
-dotenv.config();
-connectDB();
+const router = express.Router();
 
-const app = express();
+/* PUBLIC */
+router.post("/login", loginAdmin);
+router.post("/logout", logoutAdmin);
 
-app.use(express.json());
-app.use(cookieParser());
+/* ADMIN */
+router.get("/me", protect, getMe);
 
-app.use("/api/auth", authRoutes);
+// create admin 
+router.post("/create-admin", createAdmin);
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
-});
+router.post(
+  "/create-sub-admin",
+  protect,
+  checkPermission("USERS_MANAGE"),
+  createSubAdmin
+);
+
+export default router;

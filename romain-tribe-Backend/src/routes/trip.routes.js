@@ -1,7 +1,7 @@
 import express from "express";
 import upload from "../utils/upload.js";
-import { verifyUser } from "../middlewares/auth.middleware.js";
-import { isAdmin } from "../middlewares/admin.middleware.js";
+import { protect } from "../middlewares/auth.middleware.js";
+// import { } from "../middlewares/admin.middleware.js";
 import {
   createTrip,
   getTrips,
@@ -12,8 +12,8 @@ import {
 const router = express.Router();
 
 router.get("/", getTrips);
-router.post("/", verifyUser, isAdmin, upload.array("images", 6), createTrip);
-router.put("/:id", verifyUser, isAdmin, updateTrip);
-router.delete("/:id", verifyUser, isAdmin, deleteTrip);
+router.post("/", protect,  upload.array("images", 6), createTrip);
+router.put("/:id", protect,  updateTrip);
+router.delete("/:id", protect,  deleteTrip);
 
 export default router;
