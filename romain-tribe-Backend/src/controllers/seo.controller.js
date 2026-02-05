@@ -1,4 +1,4 @@
-import Seo from "./seo.model.js";
+import Seo from "../models/seo.model.js";
 
 export const getSeo = async (req, res) => {
   res.json(await Seo.findOne({ page: req.params.page }));
