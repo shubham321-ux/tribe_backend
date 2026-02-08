@@ -1,7 +1,5 @@
 import express from "express";
 import upload from "../utils/upload.js";
-import { protect } from "../middlewares/auth.middleware.js";
-// import { } from "../middlewares/admin.middleware.js";
 import {
   createTrip,
   getTrips,
@@ -12,8 +10,29 @@ import {
 const router = express.Router();
 
 router.get("/", getTrips);
-router.post("/", protect,  upload.array("images", 6), createTrip);
-router.put("/:id", protect,  updateTrip);
-router.delete("/:id", protect,  deleteTrip);
+
+router.post(
+  "/",
+  upload.fields([
+    { name: "attachments", maxCount: 5 },
+    { name: "images", maxCount: 10 },
+    
+  ]),
+   (req,res,next)=>{
+    console.log("this body",req.body)
+     next()},
+  createTrip
+);
+
+router.put(
+  "/:id",
+  upload.fields([
+    { name: "images", maxCount: 10 },
+    { name: "attachments", maxCount: 5 }
+  ]),
+  updateTrip
+);
+
+router.delete("/:id", deleteTrip);
 
 export default router;
