@@ -5,6 +5,7 @@ import {
   createSubAdmin,
   getMe,
   createAdmin,
+  verifyToken
 } from "../controllers/auth.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
@@ -15,6 +16,7 @@ const router = express.Router();
 /* PUBLIC */
 router.post("/login", loginAdmin);
 router.post("/logout", logoutAdmin);
+router.get("/verify", verifyToken);
 
 /* ADMIN */
 router.get("/me", protect, getMe);

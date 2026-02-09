@@ -22,21 +22,15 @@ export const createTrip = async (req, res) => {
       attachmentUrls.push(result.secure_url);
     }
 
-    // ✅ Clean and parse all fields
     const tripData = Object.keys(req.body).reduce((acc, key) => {
-      const cleanKey = key.trim(); // Remove spaces from keys
+      const cleanKey = key.trim(); 
       let value = req.body[key];
-
-      // Parse JSON strings
       if (typeof value === 'string') {
         value = value.trim();
         
-        // Remove wrapping quotes
         if (value.startsWith('"') && value.endsWith('"')) {
           value = value.slice(1, -1);
         }
-
-        // Try to parse as JSON
         if (value.startsWith('{') || value.startsWith('[')) {
           try {
             value = JSON.parse(value);
@@ -53,8 +47,6 @@ export const createTrip = async (req, res) => {
     // Convert numeric fields
     if (tripData.price) tripData.price = Number(tripData.price);
     if (tripData.rating) tripData.rating = Number(tripData.rating);
-
-    console.log("✅ Final tripData:", tripData);
 
     const trip = await Trip.create({
       ...tripData,
@@ -81,14 +73,61 @@ export const createTrip = async (req, res) => {
  */
 export const getTrips = async (req, res) => {
   try {
-    const trips = await Trip.find({ isActive: true })
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Filter parameters
+    const filter = { isActive: true };
+    
+    // Search functionality
+    if (req.query.search) {
+      filter.$or = [
+        { title: { $regex: req.query.search, $options: 'i' } },
+        { location: { $regex: req.query.search, $options: 'i' } },
+        { description: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+
+    // Category filter
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
+
+    // Price range filter
+    if (req.query.minPrice || req.query.maxPrice) {
+      filter.price = {};
+      if (req.query.minPrice) filter.price.$gte = Number(req.query.minPrice);
+      if (req.query.maxPrice) filter.price.$lte = Number(req.query.maxPrice);
+    }
+
+    // Get total count
+    const totalTrips = await Trip.countDocuments(filter);
+
+    // Get paginated trips
+    const trips = await Trip.find(filter)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalTrips / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
 
     res.status(200).json({
       success: true,
-      count: trips.length,
       data: trips,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalTrips,
+        limit,
+        hasNextPage,
+        hasPrevPage,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -97,7 +136,6 @@ export const getTrips = async (req, res) => {
     });
   }
 };
-
 /**
  * UPDATE TRIP (optional image replace)
  */

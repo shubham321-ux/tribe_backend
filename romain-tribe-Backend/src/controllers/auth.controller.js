@@ -47,6 +47,65 @@ export const loginAdmin = async (req, res) => {
   });
 };
 
+/*  VERIFY TOKEN  */
+export const verifyToken = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "No token provided" 
+      });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Get admin from database
+    const admin = await Admin.findById(decoded.id).select("-password");
+
+    if (!admin || !admin.isActive) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid token or user not active" 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+        permissions: admin.permissions,
+      },
+    });
+  } catch (error) {
+    console.error("Token verification error:", error);
+    
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid token" 
+      });
+    }
+    
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Token expired" 
+      });
+    }
+
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error" 
+    });
+  }
+};
+
 /*  CREATE SUB ADMIN  */
 export const createSubAdmin = async (req, res) => {
   const { name, email, password, permissions } = req.body;

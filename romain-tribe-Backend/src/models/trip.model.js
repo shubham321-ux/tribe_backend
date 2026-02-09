@@ -20,8 +20,8 @@ const TripSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
 
     attachments: [String],
-
-    // ✅ NEW: Trip Features / Amenities
+    category:[String],
+  
     amenities: {
       toilet: { type: Boolean, default: false },
       wifi: { type: Boolean, default: false },
