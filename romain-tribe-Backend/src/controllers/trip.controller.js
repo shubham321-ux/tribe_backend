@@ -5,9 +5,15 @@ import { uploadToCloudinary } from "../config/cloudinary.js";
  * CREATE TRIP
  */
 export const createTrip = async (req, res) => {
+  
   try {
     const images = req.files?.images || [];
     const attachments = req.files?.attachments || [];
+
+    console.log("FULL FILE OBJECT:", images[0]);
+console.log("TYPE OF BUFFER:", typeof images[0]?.buffer);
+console.log("IS REAL BUFFER:", Buffer.isBuffer(images[0]?.buffer));
+
 
     const imageUrls = [];
     const attachmentUrls = [];
@@ -141,38 +147,64 @@ export const getTrips = async (req, res) => {
  */
 export const updateTrip = async (req, res) => {
   try {
-    let updateData = { ...req.body };
+    console.log("📦 Update - Files received:", req.files);
+    console.log("📝 Update - Body received:", req.body);
 
-    if (req.body.price) updateData.price = Number(req.body.price);
-    if (req.body.rating) updateData.rating = Number(req.body.rating);
-    if (req.body.isActive)
-      updateData.isActive = req.body.isActive === "true";
+    let updateData = {};
 
-    if (req.body.amenities) {
-      updateData.amenities =
-        typeof req.body.amenities === "string"
-          ? JSON.parse(req.body.amenities)
-          : req.body.amenities;
-    }
+    // Process body data
+    Object.keys(req.body).forEach((key) => {
+      let value = req.body[key];
+      
+      if (typeof value === 'string') {
+        value = value.trim();
+        
+        // Remove extra quotes
+        if (value.startsWith('"') && value.endsWith('"')) {
+          value = value.slice(1, -1);
+        }
+        
+        // Parse JSON strings
+        if (value.startsWith('{') || value.startsWith('[')) {
+          try {
+            value = JSON.parse(value);
+          } catch (e) {
+            // Not valid JSON, keep as string
+          }
+        }
+      }
+      
+      updateData[key] = value;
+    });
 
-    // ✅ FIX: Handle images from upload.fields()
+    // Convert numeric fields
+    if (updateData.price) updateData.price = Number(updateData.price);
+    if (updateData.rating) updateData.rating = Number(updateData.rating);
+    if (updateData.maxGroupSize) updateData.maxGroupSize = Number(updateData.maxGroupSize);
+    if (updateData.isActive) updateData.isActive = updateData.isActive === "true";
+
+    // ✅ FIX: Handle images upload - PASS file.buffer
     if (req.files?.images && req.files.images.length > 0) {
       const imageUrls = [];
 
       for (const file of req.files.images) {
-        const uploaded = await uploadToCloudinary(file, "travel/trips");
+        console.log("📸 Uploading updated image:", file.originalname);
+        // IMPORTANT: Pass file.buffer, not file
+        const uploaded = await uploadToCloudinary(file.buffer, "trips/images");
         imageUrls.push(uploaded.secure_url);
       }
 
       updateData.images = imageUrls;
     }
 
-    // ✅ Handle attachments if needed
+    // ✅ Handle attachments upload - PASS file.buffer
     if (req.files?.attachments && req.files.attachments.length > 0) {
       const attachmentUrls = [];
 
       for (const file of req.files.attachments) {
-        const uploaded = await uploadToCloudinary(file, "trips/attachments");
+        console.log("📎 Uploading updated attachment:", file.originalname);
+        // IMPORTANT: Pass file.buffer, not file
+        const uploaded = await uploadToCloudinary(file.buffer, "trips/attachments");
         attachmentUrls.push(uploaded.secure_url);
       }
 
@@ -182,7 +214,7 @@ export const updateTrip = async (req, res) => {
     const trip = await Trip.findByIdAndUpdate(
       req.params.id,
       updateData,
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!trip) {
@@ -192,6 +224,8 @@ export const updateTrip = async (req, res) => {
       });
     }
 
+    console.log("✅ Trip updated successfully:", trip._id);
+
     res.status(200).json({
       success: true,
       message: "Trip updated successfully",
@@ -199,12 +233,14 @@ export const updateTrip = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("❌ Update Trip Error:", error);
     res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
+
 
 /**
  * DELETE TRIP

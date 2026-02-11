@@ -8,7 +8,8 @@ export const createBooking = async (req, res) => {
     to: process.env.ADMIN_EMAIL,
     subject: "New Trip Booking",
     html: `<h3>${booking.name} booked a trip</h3>
-    <h5>Email: ${booking.email}</h5>`
+    <h5>Email: ${booking.email}</h5>
+    <h5>Email: ${booking?.phone}</h5>`
   });
 
   res.status(201).json({ message: "Booking successful" });

@@ -1,5 +1,5 @@
-import { v2 as cloudinary } from "cloudinary";
-import streamifier from "streamifier";
+import { v2 as cloudinary } from 'cloudinary';
+import streamifier from 'streamifier';
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -7,25 +7,29 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
 });
 
-export const uploadToCloudinary = (buffer, folder = "uploads") => {
-  return new Promise((resolve, reject) => {
-    // ✅ SAFETY CHECK (VERY IMPORTANT)
-    if (!buffer || !Buffer.isBuffer(buffer)) {
-      return reject(new Error("Invalid file buffer"));
-    }
+export const uploadToCloudinary = (fileBuffer, folder = "uploads") => {
+  if (!Buffer.isBuffer(fileBuffer)) {
+    throw new Error("Invalid file buffer: not a Buffer instance");
+  }
 
+  return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      { folder },
+      {
+        folder,
+        resource_type: "auto",
+      },
       (error, result) => {
-        if (error) return reject(error);
+        if (error) {
+          console.error("❌ Cloudinary upload error:", error);
+          return reject(error);
+        }
         resolve(result);
       }
     );
 
-    // ✅ STREAM ERROR HANDLING
-    uploadStream.on("error", reject);
-
-    // ✅ ONLY buffer goes here
-    streamifier.createReadStream(buffer).pipe(uploadStream);
+    streamifier.createReadStream(fileBuffer).pipe(uploadStream);
   });
 };
+
+
+export default cloudinary;

@@ -14,9 +14,8 @@ router.get("/", getTrips);
 router.post(
   "/",
   upload.fields([
-    { name: "attachments", maxCount: 5 },
     { name: "images", maxCount: 10 },
-    
+    { name: "attachments", maxCount: 5 }
   ]),
    (req,res,next)=>{
     console.log("this body",req.body)
@@ -30,6 +29,9 @@ router.put(
     { name: "images", maxCount: 10 },
     { name: "attachments", maxCount: 5 }
   ]),
+  (req,res,next)=>{
+    console.log("this body",req.body)
+     next()},
   updateTrip
 );
 
