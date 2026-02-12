@@ -145,3 +145,66 @@ export const deleteBooking = async (req, res) => {
     });
   }
 };
+// Get Dashboard Stats
+export const getDashboardStats = async (req, res) => {
+  try {
+    // Get total counts by status
+    const [totalBookings, pendingCount, confirmedCount, cancelledCount] = await Promise.all([
+      Booking.countDocuments(),
+      Booking.countDocuments({ status: "PENDING" }),
+      Booking.countDocuments({ status: "CONFIRMED" }),
+      Booking.countDocuments({ status: "CANCELLED" }),
+    ]);
+
+    // Get recent bookings (last 10)
+    const recentBookings = await Booking.find()
+      .populate("trip", "title price")
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    // Get bookings by month (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const bookingsByMonth = await Booking.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: sixMonthsAgo },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        stats: {
+          total: totalBookings,
+          pending: pendingCount,
+          confirmed: confirmedCount,
+          cancelled: cancelledCount,
+        },
+        recentBookings,
+        bookingsByMonth,
+      },
+    });
+  } catch (error) {
+    console.error("Dashboard stats error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch dashboard stats",
+    });
+  }
+};

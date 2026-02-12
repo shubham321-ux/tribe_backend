@@ -4,6 +4,7 @@ import { protect } from "../middlewares/auth.middleware.js";
 import { getAllBookings } from "../controllers/booking.controller.js";
 import { updateBookingStatus } from "../controllers/booking.controller.js";
 import { deleteBooking } from "../controllers/booking.controller.js";
+import { getDashboardStats } from "../controllers/booking.controller.js";
 const router = express.Router();
 
 router.post("/", createBooking);
@@ -28,5 +29,7 @@ router.delete(
 //   checkPermission("BOOKINGS_MANAGE"),
   deleteBooking
 );
+
+router.get("/admin/dashboard/stats",protect, getDashboardStats);
 
 export default router;

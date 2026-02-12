@@ -14,6 +14,7 @@ import pageRoutes from "./routes/page.routes.js";
 import contentRoutes from "./routes/content.routes.js";
 import newsRoutes from "./routes/news.routes.js"
 import bannerRoutes from "./routes/banner.routes.js";
+import contactRoutes from "./routes/contact.route.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,6 +56,7 @@ app.use("/api/pages", pageRoutes);
 app.use("/api/content", contentRoutes);
 app.use("/api/news",newsRoutes)
 app.use("/api/banners", bannerRoutes);
+app.use("/api/contact",contactRoutes)
 
 /*  FRONTEND  */
 const frontendPath = path.join(__dirname, "..","..", "romain-tribe-Frontend", "dist");
