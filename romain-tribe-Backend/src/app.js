@@ -15,6 +15,8 @@ import contentRoutes from "./routes/content.routes.js";
 import newsRoutes from "./routes/news.routes.js"
 import bannerRoutes from "./routes/banner.routes.js";
 import contactRoutes from "./routes/contact.route.js"
+import queryRoutes from "./routes/query.routes.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,21 +44,24 @@ app.use(cors({
 }));
 
 
-app.use(express.json());
+// app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Added limit for safety
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 app.use(helmet());
 app.use(compression());
 
-/*  API ROUTES  */
+/*  API ROUTES  */  
 app.use("/api/trips", tripRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/seo", seoRoutes);
 app.use("/api/pages", pageRoutes);
 app.use("/api/content", contentRoutes);
-app.use("/api/news",newsRoutes)
+app.use("/api/news",newsRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/contact",contactRoutes)
+app.use("/api/queries", queryRoutes);
 
 /*  FRONTEND  */
 const frontendPath = path.join(__dirname, "..","..", "romain-tribe-Frontend", "dist");
